@@ -1,0 +1,11 @@
+[
+  { "slug": "wedding-nikah", "title": "Свадьбы / Никахи" },
+  { "slug": "babi-chaye", "title": "Бәби чәе" },
+  { "slug": "tatar-ashlary", "title": "Татар ашлары" },
+  { "slug": "corporate", "title": "Корпоративы" },
+  { "slug": "birthday", "title": "Дни рождения / Юбилеи" },
+  { "slug": "business", "title": "Бизнес мероприятия" },
+  { "slug": "buffet", "title": "Фуршеты" },
+  { "slug": "catering", "title": "Кейтеринг" },
+  { "slug": "networking", "title": "Нетворкинги" }
+]

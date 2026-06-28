@@ -1,0 +1,221 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--color-bg-base));
+  color: rgb(var(--color-ink));
+  font-family: var(--font-body), "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.01em;
+}
+
+.container-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(var(--color-accent));
+}
+
+.eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: rgb(var(--color-accent));
+  display: inline-block;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.85rem 1.6rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease,
+    color 0.18s ease, border-color 0.18s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn-gold {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-accent)) 0%,
+    rgb(var(--color-accent-soft)) 100%
+  );
+  color: #ffffff;
+  box-shadow: 0 10px 30px -12px rgba(184, 143, 80, 0.5);
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 38px -12px rgba(184, 143, 80, 0.65);
+}
+
+.btn-outline {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+.btn-dark {
+  background: rgb(var(--color-brand));
+  color: #fff;
+}
+
+.btn-dark:hover {
+  background: rgb(var(--color-brand-soft));
+  transform: translateY(-2px);
+}
+
+.card {
+  background: rgb(var(--color-bg-surface));
+  border: 1px solid rgb(var(--color-line));
+  border-radius: 20px;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 26px 50px -28px rgba(184, 143, 80, 0.22);
+  border-color: rgb(var(--color-accent-soft));
+}
+
+.section-title {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.field {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgb(var(--color-line));
+  background: #fff;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  color: rgb(var(--color-ink));
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.field::placeholder {
+  color: rgb(var(--color-ink-muted));
+}
+
+.field:focus {
+  outline: none;
+  border-color: rgb(var(--color-accent));
+  box-shadow: 0 0 0 3px rgba(184, 143, 80, 0.2);
+}
+
+.fade-up {
+  animation: fadeUp 0.7s ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pulse-soft {
+  animation: pulseSoft 3s ease-in-out infinite;
+}
+
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.float-y {
+  animation: floatY 4s ease-in-out infinite;
+}
+
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.ornament-bg {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 215, 140, 0.12) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

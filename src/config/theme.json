@@ -1,0 +1,22 @@
+{
+  "brand": {
+    "primary": "#A67C52",
+    "secondary": "#2E2A27",
+    "accent": "#D4AF7F"
+  },
+  "bg": {
+    "base": "#F8F6F3",
+    "surface": "#FFFFFF"
+  },
+  "text": {
+    "primary": "#1B1B1B",
+    "secondary": "#5B5B5B",
+    "inverse": "#FFFFFF"
+  },
+  "radius": {
+    "sm": "8px",
+    "md": "12px",
+    "lg": "16px",
+    "xl": "24px"
+  }
+}
