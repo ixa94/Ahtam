@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { AvailabilityCalendar } from "@/components/sections/availability-calendar";
 import { HallPhotoGallery } from "@/components/sections/hall-photo-gallery";
+import { LocationMap, mapLink } from "@/components/sections/location-map";
 import { JsonLd } from "@/components/seo/json-ld";
 import { FeatureIcon } from "@/components/ui/feature-icon";
 import { getPublishedArticles } from "@/lib/content/repository";
@@ -40,9 +41,9 @@ const stats = [
 
 export default async function HomePage() {
   // Цвет цифр в hero-статистике: text-white / text-gold / text-neutral-900
-  const heroStatsColorClass = "text-white";
+  const heroStatsColorClass = "text-neutral-900";
   // Цвет слова "гибко": text-white / text-gold / text-neutral-900
-  const heroFlexibleWordColorClass = "text-white";
+  const heroFlexibleWordColorClass = "text-neutral-900";
   // Цвет иконок в блоке "Бронирование": text-white / text-gold / text-neutral-900
   const bookingIconsColorClass = "text-white";
 
@@ -55,27 +56,27 @@ export default async function HomePage() {
 
       <main>
         {/* HERO */}
-        <section className="relative overflow-hidden bg-brand text-white">
-          <div className="absolute inset-0 ornament-bg opacity-40" aria-hidden="true" />
+        <section className="relative overflow-hidden bg-white">
+          <div className="absolute inset-0 ornament-bg opacity-30" aria-hidden="true" />
           <div
-            className="pulse-soft absolute -right-32 -top-32 h-96 w-96 rounded-full bg-gold/20 blur-3xl"
+            className="pulse-soft absolute -right-32 -top-32 h-96 w-96 rounded-full bg-gold/15 blur-3xl"
             aria-hidden="true"
           />
           <div
-            className="float-y absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-brand-soft/40 blur-3xl"
+            className="float-y absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-brand/5 blur-3xl"
             aria-hidden="true"
           />
 
           <div className="container-page relative grid gap-12 py-20 md:py-28 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div className="fade-up">
               <span className="eyebrow">Гастрономическое пространство</span>
-              <h1 className="mt-5 font-display text-4xl font-bold leading-[1.08] sm:text-5xl lg:text-6xl">
+              <h1 className="mt-5 font-display text-4xl font-bold leading-[1.08] text-brand sm:text-5xl lg:text-6xl">
                 {branding.venueName} —
                 <br />
                 банкетный зал для ваших
                 <span className="text-gold"> особенных событий</span>
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-neutral-300">
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
                 Никахи, свадьбы и семейные мероприятия в Казани. У нас один зал до 50 гостей, а
                 расположение столов меняется под формат вашего события.
               </p>
@@ -99,18 +100,18 @@ export default async function HomePage() {
                     >
                       {item.value}
                     </div>
-                    <div className="mt-1 text-xs leading-snug text-neutral-400">{item.label}</div>
+                    <div className="mt-1 text-xs leading-snug text-ink-muted">{item.label}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="fade-up rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur-sm">
-              <h2 className="font-display text-xl font-semibold text-white">Быстрый расчёт</h2>
-              <p className="mt-2 text-sm text-neutral-400">
+            <div className="fade-up card p-7 shadow-soft">
+              <h2 className="font-display text-xl font-semibold text-brand">Быстрый расчёт</h2>
+              <p className="mt-2 text-sm text-ink-soft">
                 Оставьте заявку — уточним дату, формат и предложим лучшую рассадку столов.
               </p>
-              <div className="mt-6 rounded-2xl bg-white p-5 text-ink">
+              <div className="mt-6">
                 <BookingForm />
               </div>
             </div>
@@ -164,6 +165,8 @@ export default async function HomePage() {
         </section>
 
         <AvailabilityCalendar />
+
+        <LocationMap />
 
         {/* ARTICLES */}
         <section className="bg-white py-20">
@@ -220,9 +223,14 @@ export default async function HomePage() {
                 >
                   <span className={bookingIconsColorClass}>☎</span> {branding.phoneBooking}
                 </a>
-                <p className="flex items-center gap-3 text-neutral-200">
+                <a
+                  href={mapLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 text-neutral-200 transition-colors hover:text-gold"
+                >
                   <span className={bookingIconsColorClass}>⌖</span> {branding.address}
-                </p>
+                </a>
                 <p className="flex items-center gap-3 text-neutral-200">
                   <span className={bookingIconsColorClass}>◷</span> {branding.workHours}
                 </p>

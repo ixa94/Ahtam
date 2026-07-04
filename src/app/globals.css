@@ -98,13 +98,13 @@ h3,
 }
 
 .btn-outline {
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #fff;
+  border-color: rgb(var(--color-line));
+  color: rgb(var(--color-brand));
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.75);
+  background: rgb(var(--color-brand) / 0.06);
+  border-color: rgb(var(--color-brand) / 0.4);
 }
 
 .btn-dark {
