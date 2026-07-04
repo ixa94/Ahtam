@@ -3,9 +3,10 @@ import { readJson, writeJson } from "@/lib/data/file-store";
 
 export type Settings = {
   telegramChatIds: string[];
+  maxChatIds: string[];
 };
 
-const DEFAULT: Settings = { telegramChatIds: [] };
+const DEFAULT: Settings = { telegramChatIds: [], maxChatIds: [] };
 
 function checkAuth(request: Request) {
   const password = process.env.ADMIN_PASSWORD;
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const settings = await readJson<Settings>("settings.json", DEFAULT);
-  return NextResponse.json(settings);
+  return NextResponse.json({ ...DEFAULT, ...settings });
 }
 
 export async function POST(request: Request) {
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   }
   const body = await request.json();
   const current = await readJson<Settings>("settings.json", DEFAULT);
-  const updated: Settings = { ...current, ...body };
+  const updated: Settings = { ...DEFAULT, ...current, ...body };
   await writeJson("settings.json", updated);
   return NextResponse.json({ ok: true });
 }

@@ -12,7 +12,7 @@ type Lead = {
   message?: string;
   createdAt: string;
 };
-type Settings = { telegramChatIds: string[] };
+type Settings = { telegramChatIds: string[]; maxChatIds: string[] };
 
 const MONTH_NAMES = [
   "Январь","Февраль","Март","Апрель","Май","Июнь",
@@ -55,7 +55,7 @@ export default function AdminPage() {
   // Data
   const [blocked, setBlocked] = useState<BlockedDate[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [settings, setSettings] = useState<Settings>({ telegramChatIds: [] });
+  const [settings, setSettings] = useState<Settings>({ telegramChatIds: [], maxChatIds: [] });
 
   // Calendar state
   const today = new Date();
@@ -69,6 +69,7 @@ export default function AdminPage() {
 
   // Settings state
   const [newChatId, setNewChatId] = useState("");
+  const [newMaxChatId, setNewMaxChatId] = useState("");
   const [settingsMsg, setSettingsMsg] = useState("");
   const [testLoading, setTestLoading] = useState(false);
 
@@ -100,7 +101,7 @@ export default function AdminPage() {
 
     setLeads(leadsData.leads ?? []);
     setBlocked(datesData.dates ?? []);
-    setSettings(settingsData ?? { telegramChatIds: [] });
+    setSettings(settingsData ?? { telegramChatIds: [], maxChatIds: [] });
     setPassword(pwdInput);
     setAuthed(true);
     setAuthLoading(false);
@@ -112,7 +113,7 @@ export default function AdminPage() {
     setPassword("");
     setBlocked([]);
     setLeads([]);
-    setSettings({ telegramChatIds: [] });
+    setSettings({ telegramChatIds: [], maxChatIds: [] });
   }
 
   // ── Calendar ──────────────────────────────────────
@@ -216,16 +217,34 @@ export default function AdminPage() {
     await saveSettings(updated);
   }
 
-  async function sendTestMessage(chatId: string) {
+  async function sendTestMessage(chatId: string, type: "telegram" | "max" = "telegram") {
     setTestLoading(true);
-    await fetch(`/api/admin/settings/test`, {
+    const r = await fetch(`/api/admin/settings/test`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-password": password },
-      body: JSON.stringify({ chatId }),
+      body: JSON.stringify({ chatId, type }),
     });
     setTestLoading(false);
-    setSettingsMsg("✓ Тестовое сообщение отправлено");
-    setTimeout(() => setSettingsMsg(""), 4000);
+    if (r.ok) {
+      setSettingsMsg("✓ Тестовое сообщение отправлено");
+    } else {
+      const err = await r.json().catch(() => ({}));
+      setSettingsMsg(`✗ ${err.error ?? "Ошибка"}`);
+    }
+    setTimeout(() => setSettingsMsg(""), 5000);
+  }
+
+  async function addMaxChatId() {
+    const id = newMaxChatId.trim();
+    if (!id || settings.maxChatIds.includes(id)) return;
+    const updated = { ...settings, maxChatIds: [...settings.maxChatIds, id] };
+    await saveSettings(updated);
+    setNewMaxChatId("");
+  }
+
+  async function removeMaxChatId(id: string) {
+    const updated = { ...settings, maxChatIds: settings.maxChatIds.filter((c) => c !== id) };
+    await saveSettings(updated);
   }
 
   // ── Login screen ──────────────────────────────────
@@ -463,7 +482,7 @@ export default function AdminPage() {
                       <span className="font-mono text-ink">{id}</span>
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() => sendTestMessage(id)}
+                          onClick={() => sendTestMessage(id, "telegram")}
                           disabled={testLoading}
                           className="text-xs text-ink-muted hover:text-brand"
                         >
@@ -500,16 +519,62 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Bot token info */}
+            {/* MAX messenger */}
             <div className="rounded-2xl border border-line bg-white p-6">
-              <h2 className="font-display text-lg font-semibold text-brand">Токен бота</h2>
+              <h2 className="font-display text-lg font-semibold text-brand">MAX мессенджер уведомления</h2>
               <p className="mt-2 text-sm text-ink-soft">
-                Токен хранится в файле <span className="font-mono bg-[#F9F5ED] px-1 rounded">.env</span> на сервере.
-                Переменная: <span className="font-mono bg-[#F9F5ED] px-1 rounded">TELEGRAM_BOT_TOKEN</span>
+                Добавьте User ID пользователей MAX которые будут получать уведомления о новых заявках.
               </p>
-              <p className="mt-2 text-sm text-ink-soft">
-                После изменения токена нужно перезапустить сервер.
-              </p>
+
+              <div className="mt-4 rounded-xl bg-[#F9F5ED] p-4 text-sm text-ink-soft space-y-1">
+                <p className="font-medium text-ink">Как узнать свой User ID в MAX:</p>
+                <p>1. Откройте MAX мессенджер, найдите бота <span className="font-mono bg-white px-1 rounded">@maxbot</span> или напишите <span className="font-mono bg-white px-1 rounded">/start</span> вашему боту</p>
+                <p>2. Напишите боту — он ответит вашим user_id</p>
+                <p>3. Скопируйте число и вставьте ниже</p>
+                <p className="text-xs text-ink-muted mt-2">Токен бота задаётся в .env на сервере: <span className="font-mono">MAX_BOT_TOKEN</span></p>
+              </div>
+
+              {settings.maxChatIds.length > 0 && (
+                <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+                  {settings.maxChatIds.map((id) => (
+                    <li key={id} className="flex items-center justify-between px-4 py-3 text-sm">
+                      <span className="font-mono text-ink">{id}</span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => sendTestMessage(id, "max")}
+                          disabled={testLoading}
+                          className="text-xs text-ink-muted hover:text-brand"
+                        >
+                          Тест
+                        </button>
+                        <button
+                          onClick={() => removeMaxChatId(id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Удалить
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="mt-4 flex gap-3">
+                <input
+                  value={newMaxChatId}
+                  onChange={(e) => setNewMaxChatId(e.target.value)}
+                  placeholder="User ID в MAX (например: 123456789)"
+                  className="field flex-1"
+                  onKeyDown={(e) => e.key === "Enter" && addMaxChatId()}
+                />
+                <button
+                  onClick={addMaxChatId}
+                  disabled={!newMaxChatId.trim()}
+                  className="btn btn-dark whitespace-nowrap"
+                >
+                  Добавить
+                </button>
+              </div>
             </div>
           </div>
         )}

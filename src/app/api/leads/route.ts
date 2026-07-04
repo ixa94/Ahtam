@@ -30,25 +30,50 @@ async function sendTelegram(chatId: string, text: string) {
   }).catch(() => {});
 }
 
-async function notifyAll(lead: Lead) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+async function sendMax(chatId: string, text: string) {
+  const token = process.env.MAX_BOT_TOKEN;
   if (!token) return;
+  await fetch(`https://botapi.max.ru/messages?access_token=${token}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      recipient: { user_id: Number(chatId) },
+      type: "message",
+      body: { text },
+    }),
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => {});
+}
 
-  const settings = await readJson<Settings>("settings.json", { telegramChatIds: [] });
-  if (!settings.telegramChatIds.length) return;
+async function notifyAll(lead: Lead) {
+  const settings = await readJson<Settings>("settings.json", {
+    telegramChatIds: [],
+    maxChatIds: [],
+  });
 
   const text = [
-    "📋 <b>Новая заявка с сайта АХТАМ</b>",
+    "📋 Новая заявка с сайта АХТАМ",
     `👤 Имя: ${lead.name || "не указано"}`,
-    `📞 Телефон: <b>${lead.phone}</b>`,
+    `📞 Телефон: ${lead.phone}`,
     `📅 Дата: ${lead.eventDate || "не указана"}`,
     `👥 Гостей: ${lead.guestCount ?? "не указано"}`,
-    lead.message ? `💬 Комментарий: ${lead.message}` : null,
+    lead.message ? `💬 ${lead.message}` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
-  await Promise.all(settings.telegramChatIds.map((id) => sendTelegram(id, text)));
+  const htmlText = text.replace("Новая заявка", "<b>Новая заявка</b>").replace(lead.phone, `<b>${lead.phone}</b>`);
+
+  const jobs: Promise<void>[] = [];
+
+  if (process.env.TELEGRAM_BOT_TOKEN && settings.telegramChatIds?.length) {
+    jobs.push(...settings.telegramChatIds.map((id) => sendTelegram(id, htmlText)));
+  }
+  if (process.env.MAX_BOT_TOKEN && settings.maxChatIds?.length) {
+    jobs.push(...settings.maxChatIds.map((id) => sendMax(id, text)));
+  }
+
+  await Promise.allSettled(jobs);
 }
 
 export async function GET(request: Request) {
