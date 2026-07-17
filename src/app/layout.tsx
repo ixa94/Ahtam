@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Банкетный зал при мечети АХТАМ | Казань",
   description:
     "Банкетный зал при мечети АХТАМ в Казани. Один зал до 50 гостей с вариативной рассадкой столов.",
-  metadataBase: new URL("https://kenderi.ru")
+  metadataBase: new URL("https://ahtambanket.ru")
 };
 
 type RootLayoutProps = Readonly<{
@@ -42,8 +42,29 @@ export default function RootLayout({ children }: RootLayoutProps) {
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
           rel="stylesheet"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(m,e,t,r,i,k,a){
+                  m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+                  m[i].l=1*new Date();
+                  for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+                  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+              })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=110811371', 'ym');
+
+              ym(110811371, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+            `,
+          }}
+        />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <noscript>
+          <div>
+            <img src="https://mc.yandex.ru/watch/110811371" style={{ position: "absolute", left: "-9999px" }} alt="" />
+          </div>
+        </noscript>
+      </body>
     </html>
   );
 }
