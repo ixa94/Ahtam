@@ -1,7 +1,7 @@
 import branding from "@/config/branding.json";
 
 const mapQuery = encodeURIComponent(branding.address);
-const mapEmbedSrc = `https://yandex.ru/map-widget/v1/?text=${mapQuery}&z=16`;
+const mapEmbedSrc = "https://yandex.ru/map-widget/v1/?z=12&ol=biz&oid=154848465865";
 export const mapLink = `https://yandex.ru/maps/?text=${mapQuery}`;
 
 export function LocationMap() {

@@ -166,8 +166,6 @@ export default async function HomePage() {
 
         <AvailabilityCalendar />
 
-        <LocationMap />
-
         {/* ARTICLES */}
         <section className="bg-white py-20">
           <div className="container-page">
@@ -253,6 +251,8 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        <LocationMap />
       </main>
 
       <Footer />
