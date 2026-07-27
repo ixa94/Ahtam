@@ -7,7 +7,7 @@ import { getPublishedArticles } from "@/lib/content/repository";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Статьи | Кендери",
+  title: "Статьи | АХТАМ",
   description:
     "Полезные статьи о подготовке банкетов, никахов, корпоративов и других мероприятий в Казани.",
   alternates: {
