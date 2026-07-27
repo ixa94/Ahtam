@@ -1,8 +1,8 @@
 {
   "sets": [
-    { "name": "Сет Кендери Бик Зур", "pricePerPerson": 1200 },
-    { "name": "Сет Кендери Зур", "pricePerPerson": 900 },
-    { "name": "Сет Кендери", "pricePerPerson": 700 }
+    { "name": "Сет Ахтам Бик Зур", "pricePerPerson": 1200 },
+    { "name": "Сет Ахтам Зур", "pricePerPerson": 900 },
+    { "name": "Сет Ахтам", "pricePerPerson": 700 }
   ],
   "faq": [
     {

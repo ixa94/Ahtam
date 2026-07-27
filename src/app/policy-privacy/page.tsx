@@ -3,8 +3,8 @@ import branding from "@/config/branding.json";
 import { LegalPage } from "@/components/legal/legal-page";
 
 export const metadata: Metadata = {
-  title: "Политика конфиденциальности | Кендери",
-  description: "Политика обработки персональных данных сайта Кендери.",
+  title: "Политика конфиденциальности | АХТАМ",
+  description: "Политика обработки персональных данных сайта АХТАМ.",
   alternates: {
     canonical: `${branding.baseUrl}/policy-privacy`
   }

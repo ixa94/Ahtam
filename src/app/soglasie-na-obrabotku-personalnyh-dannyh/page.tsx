@@ -3,8 +3,8 @@ import branding from "@/config/branding.json";
 import { LegalPage } from "@/components/legal/legal-page";
 
 export const metadata: Metadata = {
-  title: "Согласие на обработку персональных данных | Кендери",
-  description: "Согласие пользователя на обработку персональных данных на сайте Кендери.",
+  title: "Согласие на обработку персональных данных | АХТАМ",
+  description: "Согласие пользователя на обработку персональных данных на сайте АХТАМ.",
   alternates: {
     canonical: `${branding.baseUrl}/soglasie-na-obrabotku-personalnyh-dannyh`
   }
