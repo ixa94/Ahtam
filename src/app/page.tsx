@@ -15,6 +15,8 @@ import { FeatureIcon } from "@/components/ui/feature-icon";
 import { getPublishedArticles } from "@/lib/content/repository";
 import { getLocalBusinessSchema } from "@/lib/seo/schema";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Банкетный зал при мечети АХТАМ | Казань",
   description:

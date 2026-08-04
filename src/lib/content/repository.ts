@@ -1,5 +1,6 @@
 import articleSeed from "@/config/articles.json";
 import eventPageSeed from "@/config/event-pages.json";
+import { readJson } from "@/lib/data/file-store";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Article, EventPage, LeadPayload } from "@/types/content";
 
@@ -83,12 +84,17 @@ export async function getEventPageBySlug(slug: string): Promise<EventPage | null
   return mapEventPage(data);
 }
 
+async function getLocalArticles(): Promise<Article[]> {
+  return readJson<Article[]>("articles.json", articleSeed as Article[]);
+}
+
 export async function getPublishedArticles(limit = 6): Promise<Article[]> {
   const client = getSupabaseServerClient();
   if (!client) {
-    return [...(articleSeed as Article[])].sort((a, b) =>
-      a.publishedAt < b.publishedAt ? 1 : -1
-    );
+    const local = await getLocalArticles();
+    return [...local]
+      .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+      .slice(0, limit);
   }
 
   const { data, error } = await client
@@ -99,9 +105,10 @@ export async function getPublishedArticles(limit = 6): Promise<Article[]> {
     .limit(limit);
 
   if (error || !data?.length) {
-    return [...(articleSeed as Article[])].sort((a, b) =>
-      a.publishedAt < b.publishedAt ? 1 : -1
-    );
+    const local = await getLocalArticles();
+    return [...local]
+      .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+      .slice(0, limit);
   }
 
   return data.map(mapArticle);
@@ -110,8 +117,8 @@ export async function getPublishedArticles(limit = 6): Promise<Article[]> {
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
   const client = getSupabaseServerClient();
   if (!client) {
-    const local = (articleSeed as Article[]).find((item) => item.slug === slug);
-    return local ?? null;
+    const local = await getLocalArticles();
+    return local.find((item) => item.slug === slug) ?? null;
   }
 
   const { data, error } = await client
@@ -122,8 +129,8 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
     .maybeSingle();
 
   if (error || !data) {
-    const local = (articleSeed as Article[]).find((item) => item.slug === slug);
-    return local ?? null;
+    const local = await getLocalArticles();
+    return local.find((item) => item.slug === slug) ?? null;
   }
 
   return mapArticle(data);

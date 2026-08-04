@@ -6,6 +6,8 @@ import { Header } from "@/components/layout/header";
 import { getPublishedArticles } from "@/lib/content/repository";
 import { formatDate } from "@/lib/utils";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Статьи | АХТАМ",
   description:

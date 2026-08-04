@@ -13,6 +13,13 @@ type Lead = {
   createdAt: string;
 };
 type Settings = { telegramChatIds: string[]; maxChatIds: string[] };
+type Article = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  publishedAt: string;
+};
 
 const MONTH_NAMES = [
   "Январь","Февраль","Март","Апрель","Май","Июнь",
@@ -50,12 +57,13 @@ export default function AdminPage() {
   const [authLoading, setAuthLoading] = useState(false);
 
   // Tabs
-  const [tab, setTab] = useState<"calendar" | "leads" | "settings">("calendar");
+  const [tab, setTab] = useState<"calendar" | "leads" | "settings" | "articles">("calendar");
 
   // Data
   const [blocked, setBlocked] = useState<BlockedDate[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [settings, setSettings] = useState<Settings>({ telegramChatIds: [], maxChatIds: [] });
+  const [articles, setArticles] = useState<Article[]>([]);
 
   // Calendar state
   const today = new Date();
@@ -72,6 +80,14 @@ export default function AdminPage() {
   const [newMaxChatId, setNewMaxChatId] = useState("");
   const [settingsMsg, setSettingsMsg] = useState("");
   const [testLoading, setTestLoading] = useState(false);
+
+  // Articles state
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [articleTitle, setArticleTitle] = useState("");
+  const [articleExcerpt, setArticleExcerpt] = useState("");
+  const [articleContent, setArticleContent] = useState("");
+  const [articleSaving, setArticleSaving] = useState(false);
+  const [articleMsg, setArticleMsg] = useState("");
 
   const blockedSet = new Set(blocked.map((b) => b.date));
 
@@ -91,10 +107,13 @@ export default function AdminPage() {
       return;
     }
 
-    const [leadsData, datesData, settingsData] = await Promise.all([
+    const [leadsData, datesData, settingsData, articlesData] = await Promise.all([
       r.json(),
       fetch("/api/blocked-dates").then((res) => res.json()),
       fetch("/api/admin/settings", {
+        headers: { "x-admin-password": pwdInput },
+      }).then((res) => res.json()),
+      fetch("/api/admin/articles", {
         headers: { "x-admin-password": pwdInput },
       }).then((res) => res.json()),
     ]);
@@ -102,6 +121,7 @@ export default function AdminPage() {
     setLeads(leadsData.leads ?? []);
     setBlocked(datesData.dates ?? []);
     setSettings(settingsData ?? { telegramChatIds: [], maxChatIds: [] });
+    setArticles(articlesData.articles ?? []);
     setPassword(pwdInput);
     setAuthed(true);
     setAuthLoading(false);
@@ -114,6 +134,7 @@ export default function AdminPage() {
     setBlocked([]);
     setLeads([]);
     setSettings({ telegramChatIds: [], maxChatIds: [] });
+    setArticles([]);
   }
 
   // ── Calendar ──────────────────────────────────────
@@ -247,6 +268,69 @@ export default function AdminPage() {
     await saveSettings(updated);
   }
 
+  // ── Articles ──────────────────────────────────────
+  function startNewArticle() {
+    setEditingSlug(null);
+    setArticleTitle("");
+    setArticleExcerpt("");
+    setArticleContent("");
+    setArticleMsg("");
+  }
+
+  function startEditArticle(article: Article) {
+    setEditingSlug(article.slug);
+    setArticleTitle(article.title);
+    setArticleExcerpt(article.excerpt);
+    setArticleContent(article.content);
+    setArticleMsg("");
+  }
+
+  async function saveArticle() {
+    if (!articleTitle.trim() || !articleExcerpt.trim() || !articleContent.trim()) {
+      setArticleMsg("✗ Заполните заголовок, описание и текст");
+      return;
+    }
+    setArticleSaving(true);
+    setArticleMsg("");
+    const r = await fetch("/api/admin/articles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      body: JSON.stringify({
+        slug: editingSlug,
+        title: articleTitle.trim(),
+        excerpt: articleExcerpt.trim(),
+        content: articleContent.trim(),
+      }),
+    });
+    if (r.status === 401) { logout(); return; }
+    if (r.ok) {
+      const listR = await fetch("/api/admin/articles", {
+        headers: { "x-admin-password": password },
+      });
+      const listData = await listR.json();
+      setArticles(listData.articles ?? []);
+      setArticleMsg(editingSlug ? "✓ Статья обновлена" : "✓ Статья опубликована");
+      startNewArticle();
+    } else {
+      const err = await r.json().catch(() => ({}));
+      setArticleMsg(`✗ ${err.error ?? "Ошибка сохранения"}`);
+    }
+    setArticleSaving(false);
+  }
+
+  async function deleteArticle(slug: string) {
+    if (!confirm("Удалить статью?")) return;
+    const r = await fetch("/api/admin/articles", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      body: JSON.stringify({ slug }),
+    });
+    if (r.ok) {
+      setArticles((prev) => prev.filter((a) => a.slug !== slug));
+      if (editingSlug === slug) startNewArticle();
+    }
+  }
+
   // ── Login screen ──────────────────────────────────
   if (!authed) {
     return (
@@ -281,8 +365,8 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-2 rounded-xl border border-line bg-white p-1 w-fit">
-          {(["calendar", "leads", "settings"] as const).map((t) => (
+        <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-line bg-white p-1 w-fit">
+          {(["calendar", "leads", "articles", "settings"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -290,7 +374,13 @@ export default function AdminPage() {
                 tab === t ? "bg-brand text-white" : "text-ink-soft hover:text-brand"
               }`}
             >
-              {t === "calendar" ? "Занятые даты" : t === "leads" ? `Заявки (${leads.length})` : "Настройки"}
+              {t === "calendar"
+                ? "Занятые даты"
+                : t === "leads"
+                ? `Заявки (${leads.length})`
+                : t === "articles"
+                ? `Статьи (${articles.length})`
+                : "Настройки"}
             </button>
           ))}
         </div>
@@ -575,6 +665,142 @@ export default function AdminPage() {
                   Добавить
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ARTICLES ── */}
+        {tab === "articles" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-line bg-white p-6">
+              <h2 className="font-display text-lg font-semibold text-brand">
+                {editingSlug ? "Редактирование статьи" : "Новая статья"}
+              </h2>
+
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    Заголовок
+                  </label>
+                  <input
+                    value={articleTitle}
+                    onChange={(e) => setArticleTitle(e.target.value)}
+                    placeholder="Например: Как выбрать банкетный зал в Казани"
+                    className="field"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    Краткое описание
+                  </label>
+                  <textarea
+                    value={articleExcerpt}
+                    onChange={(e) => setArticleExcerpt(e.target.value)}
+                    placeholder="1-2 предложения — показывается в списке статей"
+                    rows={2}
+                    className="field resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    Текст статьи
+                  </label>
+                  <textarea
+                    value={articleContent}
+                    onChange={(e) => setArticleContent(e.target.value)}
+                    placeholder="Текст статьи..."
+                    rows={16}
+                    className="field resize-y font-mono text-sm leading-relaxed"
+                  />
+                  <div className="mt-2 rounded-xl bg-[#F9F5ED] p-4 text-xs text-ink-soft space-y-1">
+                    <p className="font-medium text-ink">Чтобы текст выглядел красиво:</p>
+                    <p>
+                      • Разделяйте абзацы пустой строкой
+                    </p>
+                    <p>
+                      • Для заголовка раздела начните строку с{" "}
+                      <span className="font-mono bg-white px-1 rounded">## </span>
+                      (например: <span className="font-mono bg-white px-1 rounded">## Что мы предлагаем</span>)
+                    </p>
+                    <p>
+                      • Для списка начните каждую строку с{" "}
+                      <span className="font-mono bg-white px-1 rounded">- </span>
+                      или <span className="font-mono bg-white px-1 rounded">• </span>
+                    </p>
+                    <p>
+                      • Для нумерованного списка используйте{" "}
+                      <span className="font-mono bg-white px-1 rounded">1. </span>,{" "}
+                      <span className="font-mono bg-white px-1 rounded">2. </span> и так далее
+                    </p>
+                  </div>
+                </div>
+
+                {articleMsg && (
+                  <p className={`text-sm ${articleMsg.startsWith("✗") ? "text-red-600" : "text-green-700"}`}>
+                    {articleMsg}
+                  </p>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={saveArticle}
+                    disabled={articleSaving}
+                    className="btn btn-gold"
+                  >
+                    {articleSaving ? "Сохраняем..." : editingSlug ? "Сохранить изменения" : "Опубликовать"}
+                  </button>
+                  {editingSlug && (
+                    <button
+                      onClick={startNewArticle}
+                      className="rounded-lg border border-line bg-white px-4 py-2 text-sm text-ink-soft hover:text-brand"
+                    >
+                      Отменить редактирование
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="font-display font-semibold text-brand mb-4">Опубликованные статьи</h2>
+              {articles.length === 0 ? (
+                <div className="rounded-2xl border border-line bg-white p-8 text-center text-ink-soft">
+                  Статей пока нет
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {articles.map((article) => (
+                    <div
+                      key={article.slug}
+                      className="rounded-2xl border border-line bg-white p-5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs text-ink-muted">{formatDate(article.publishedAt.slice(0, 10))}</p>
+                          <p className="mt-1 font-display font-semibold text-ink">{article.title}</p>
+                          <p className="mt-1 text-sm text-ink-soft">{article.excerpt}</p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-3">
+                          <button
+                            onClick={() => startEditArticle(article)}
+                            className="text-xs text-ink-muted hover:text-brand"
+                          >
+                            Изменить
+                          </button>
+                          <button
+                            onClick={() => deleteArticle(article.slug)}
+                            className="text-xs text-red-500 hover:text-red-700"
+                          >
+                            Удалить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

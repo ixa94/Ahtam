@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import branding from "@/config/branding.json";
+import { ArticleBody } from "@/components/content/article-body";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/content/repository";
 import { getArticleSchema } from "@/lib/seo/schema";
 import { formatDate } from "@/lib/utils";
+
+export const revalidate = 60;
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -68,7 +71,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         <section className="container-page py-16">
           <article className="mx-auto max-w-3xl">
-            <p className="whitespace-pre-line text-lg leading-8 text-ink-soft">{article.content}</p>
+            <ArticleBody content={article.content} />
           </article>
         </section>
       </main>
