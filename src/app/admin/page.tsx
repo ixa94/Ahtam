@@ -51,7 +51,6 @@ function formatDate(iso: string) {
 export default function AdminPage() {
   // Auth
   const [pwdInput, setPwdInput] = useState("");
-  const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -98,39 +97,37 @@ export default function AdminPage() {
     setAuthLoading(true);
     setAuthError("");
 
-    const r = await fetch("/api/leads", {
-      headers: { "x-admin-password": pwdInput },
+    const loginResponse = await fetch("/api/admin/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pwdInput }),
     });
-    if (r.status === 401) {
+    if (!loginResponse.ok) {
       setAuthError("Неверный пароль");
       setAuthLoading(false);
       return;
     }
 
     const [leadsData, datesData, settingsData, articlesData] = await Promise.all([
-      r.json(),
+      fetch("/api/leads").then((res) => res.json()),
       fetch("/api/blocked-dates").then((res) => res.json()),
-      fetch("/api/admin/settings", {
-        headers: { "x-admin-password": pwdInput },
-      }).then((res) => res.json()),
-      fetch("/api/admin/articles", {
-        headers: { "x-admin-password": pwdInput },
-      }).then((res) => res.json()),
+      fetch("/api/admin/settings").then((res) => res.json()),
+      fetch("/api/admin/articles").then((res) => res.json()),
     ]);
 
     setLeads(leadsData.leads ?? []);
     setBlocked(datesData.dates ?? []);
     setSettings(settingsData ?? { telegramChatIds: [], maxChatIds: [] });
     setArticles(articlesData.articles ?? []);
-    setPassword(pwdInput);
+    setPwdInput("");
     setAuthed(true);
     setAuthLoading(false);
   }
 
   function logout() {
+    void fetch("/api/admin/session", { method: "DELETE" });
     setAuthed(false);
     setPwdInput("");
-    setPassword("");
     setBlocked([]);
     setLeads([]);
     setSettings({ telegramChatIds: [], maxChatIds: [] });
@@ -144,7 +141,7 @@ export default function AdminPage() {
     if (blockedSet.has(iso)) {
       const r = await fetch("/api/blocked-dates", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json", "x-admin-password": password },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: iso }),
       });
       if (r.status === 401) { logout(); return; }
@@ -152,7 +149,7 @@ export default function AdminPage() {
     } else {
       const r = await fetch("/api/blocked-dates", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": password },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: iso, note: note || null }),
       });
       if (r.status === 401) { logout(); return; }
@@ -170,7 +167,7 @@ export default function AdminPage() {
     for (const b of past) {
       await fetch("/api/blocked-dates", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json", "x-admin-password": password },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: b.date }),
       });
     }
@@ -195,7 +192,7 @@ export default function AdminPage() {
   async function deleteLead(id: string) {
     const r = await fetch("/api/leads", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
     if (r.ok) setLeads((prev) => prev.filter((l) => l.id !== id));
@@ -205,7 +202,7 @@ export default function AdminPage() {
     if (!confirm("Удалить все заявки?")) return;
     const r = await fetch("/api/leads", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ all: true }),
     });
     if (r.ok) setLeads([]);
@@ -215,7 +212,7 @@ export default function AdminPage() {
   async function saveSettings(updated: Settings) {
     const r = await fetch("/api/admin/settings", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updated),
     });
     if (r.ok) {
@@ -242,7 +239,7 @@ export default function AdminPage() {
     setTestLoading(true);
     const r = await fetch(`/api/admin/settings/test`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chatId, type }),
     });
     setTestLoading(false);
@@ -294,7 +291,7 @@ export default function AdminPage() {
     setArticleMsg("");
     const r = await fetch("/api/admin/articles", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         slug: editingSlug,
         title: articleTitle.trim(),
@@ -304,9 +301,7 @@ export default function AdminPage() {
     });
     if (r.status === 401) { logout(); return; }
     if (r.ok) {
-      const listR = await fetch("/api/admin/articles", {
-        headers: { "x-admin-password": password },
-      });
+      const listR = await fetch("/api/admin/articles");
       const listData = await listR.json();
       setArticles(listData.articles ?? []);
       setArticleMsg(editingSlug ? "✓ Статья обновлена" : "✓ Статья опубликована");
@@ -322,7 +317,7 @@ export default function AdminPage() {
     if (!confirm("Удалить статью?")) return;
     const r = await fetch("/api/admin/articles", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json", "x-admin-password": password },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slug }),
     });
     if (r.ok) {

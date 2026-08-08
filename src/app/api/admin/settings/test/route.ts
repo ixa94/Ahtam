@@ -1,10 +1,5 @@
-import { NextResponse } from "next/server";
-
-function checkAuth(request: Request) {
-  const password = process.env.ADMIN_PASSWORD;
-  const auth = request.headers.get("x-admin-password");
-  return !!(password && auth === password);
-}
+import { NextRequest, NextResponse } from "next/server";
+import { isAdminAuthenticated } from "@/lib/security/admin-auth";
 
 async function testTelegram(chatId: string): Promise<{ ok: boolean; error?: string }> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -58,13 +53,15 @@ async function testMax(chatId: string): Promise<{ ok: boolean; error?: string }>
   }
 }
 
-export async function POST(request: Request) {
-  if (!checkAuth(request)) {
+export async function POST(request: NextRequest) {
+  if (!isAdminAuthenticated(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const { chatId, type } = await request.json();
-  if (!chatId) return NextResponse.json({ error: "chatId required" }, { status: 400 });
+  if (typeof chatId !== "string" || !chatId.trim() || chatId.length > 64 || !["max", "telegram"].includes(type)) {
+    return NextResponse.json({ error: "invalid request" }, { status: 400 });
+  }
 
   const result = type === "max" ? await testMax(chatId) : await testTelegram(chatId);
 

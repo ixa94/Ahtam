@@ -1,21 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import articleSeed from "@/config/articles.json";
 import { readJson, writeJson } from "@/lib/data/file-store";
 import { slugify } from "@/lib/content/slugify";
 import type { Article } from "@/types/content";
+import { isAdminAuthenticated } from "@/lib/security/admin-auth";
 
-function checkAuth(request: Request) {
-  const password = process.env.ADMIN_PASSWORD;
-  const auth = request.headers.get("x-admin-password");
-  return !!(password && auth === password);
-}
+const articleSchema = z.object({
+  slug: z.string().trim().min(1).max(200).optional(),
+  title: z.string().trim().min(1).max(200),
+  excerpt: z.string().trim().min(1).max(500),
+  content: z.string().trim().min(1).max(100_000),
+}).strict();
 
 async function readArticles() {
   return readJson<Article[]>("articles.json", articleSeed as Article[]);
 }
 
-export async function GET(request: Request) {
-  if (!checkAuth(request)) {
+export async function GET(request: NextRequest) {
+  if (!isAdminAuthenticated(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const articles = await readArticles();
@@ -24,17 +27,14 @@ export async function GET(request: Request) {
   });
 }
 
-export async function POST(request: Request) {
-  if (!checkAuth(request)) {
+export async function POST(request: NextRequest) {
+  if (!isAdminAuthenticated(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { slug: existingSlug, title, excerpt, content } = body;
-
-  if (!title?.trim() || !excerpt?.trim() || !content?.trim()) {
-    return NextResponse.json({ error: "title, excerpt and content required" }, { status: 400 });
-  }
+  const parsed = articleSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "validation_error" }, { status: 400 });
+  const { slug: existingSlug, title, excerpt, content } = parsed.data;
 
   const articles = await readArticles();
 
@@ -67,12 +67,14 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true, slug });
 }
 
-export async function DELETE(request: Request) {
-  if (!checkAuth(request)) {
+export async function DELETE(request: NextRequest) {
+  if (!isAdminAuthenticated(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const { slug } = await request.json();
-  if (!slug) return NextResponse.json({ error: "slug required" }, { status: 400 });
+  if (typeof slug !== "string" || !slug || slug.length > 200) {
+    return NextResponse.json({ error: "valid slug required" }, { status: 400 });
+  }
 
   const articles = await readArticles();
   await writeJson("articles.json", articles.filter((a) => a.slug !== slug));

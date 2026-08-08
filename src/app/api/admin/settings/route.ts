@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { readJson, writeJson } from "@/lib/data/file-store";
+import { isAdminAuthenticated } from "@/lib/security/admin-auth";
 
 export type Settings = {
   telegramChatIds: string[];
@@ -8,27 +10,25 @@ export type Settings = {
 
 const DEFAULT: Settings = { telegramChatIds: [], maxChatIds: [] };
 
-function checkAuth(request: Request) {
-  const password = process.env.ADMIN_PASSWORD;
-  const auth = request.headers.get("x-admin-password");
-  return !!(password && auth === password);
-}
+const settingsSchema = z.object({
+  telegramChatIds: z.array(z.string().trim().min(1).max(64)).max(20),
+  maxChatIds: z.array(z.string().trim().min(1).max(64)).max(20),
+}).strict();
 
-export async function GET(request: Request) {
-  if (!checkAuth(request)) {
+export async function GET(request: NextRequest) {
+  if (!isAdminAuthenticated(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const settings = await readJson<Settings>("settings.json", DEFAULT);
   return NextResponse.json({ ...DEFAULT, ...settings });
 }
 
-export async function POST(request: Request) {
-  if (!checkAuth(request)) {
+export async function POST(request: NextRequest) {
+  if (!isAdminAuthenticated(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const body = await request.json();
-  const current = await readJson<Settings>("settings.json", DEFAULT);
-  const updated: Settings = { ...DEFAULT, ...current, ...body };
-  await writeJson("settings.json", updated);
+  const parsed = settingsSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "validation_error" }, { status: 400 });
+  await writeJson("settings.json", parsed.data);
   return NextResponse.json({ ok: true });
 }

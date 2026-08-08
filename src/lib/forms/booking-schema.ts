@@ -7,9 +7,9 @@ export const bookingSchema = z.object({
     .trim()
     .min(10, "Введите корректный номер телефона")
     .max(30, "Слишком длинный номер телефона"),
-  eventDate: z.string().trim().optional(),
+  eventDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   guestCount: z.coerce.number().int().positive().max(1000).optional(),
-  hallSlug: z.string().trim().optional(),
+  hallSlug: z.string().trim().max(100).regex(/^[a-z0-9-]+$/).optional(),
   message: z.string().trim().max(1200, "Слишком длинное сообщение").optional(),
   trap: z.string().max(0).optional()
 });
